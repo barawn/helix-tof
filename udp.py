@@ -235,8 +235,14 @@ class TOFProto(UDPFPGA):
 		rxd=[]
 		while len(rxd)<len:
 			val = self.read(0x2104)
+			isr = self.read(0x2020)
 			if not (val & 0x40):
 				rxd.append(self.read(0x210C))
+			if isr & 0x20:
+				print "TX error"
+				self.write(0x2100, 0x2)
+				self.write(0x2100, 0x0)
+				return False
 		# I need to check somehow that things haven't gone horribly wrong.
 		return rxd
 		
