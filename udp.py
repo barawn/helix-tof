@@ -229,7 +229,7 @@ class TOFProto(UDPFPGA):
 		# Write address + start bit (0x100)
 		if len==0:
 			return []
-		self.write(0x2108, (dev<<1) | 0x100)
+		self.write(0x2108, (dev<<1) | 0x101)
 		self.write(0x2108, len | 0x200)
 		# now read until RX_FIFO not empty
 		rxd=[]
