@@ -223,25 +223,27 @@ class TOFProto(UDPFPGA):
 		else:
 			return True
 
-	def readI2C(self, dev, len):
+	def readI2C(self, dev, length):
 		# I2C read process (to a device with 7 bit address 'dev')
 		# Read len bytes.
-		# Write address + start bit (0x100)
-		if len==0:
+		# Write address + start bit (0x100) with read makes (0x101)
+		if length==0:
 			return []
 		self.write(0x2108, (dev<<1) | 0x101)
-		self.write(0x2108, len | 0x200)
+		self.write(0x2108, length | 0x200)
 		# now read until RX_FIFO not empty
 		rxd=[]
-		while len(rxd)<len:
+		while len(rxd)<length:
 			val = self.read(0x2104)
 			isr = self.read(0x2020)
-			if not (val & 0x40):
-				rxd.append(self.read(0x210C))
-			if isr & 0x20:
-				print "TX error"
-				self.write(0x2100, 0x2)
-				self.write(0x2100, 0x0)
+                        print val
+			if not (val & 0x40): #only is true when val & 0x40 is 0 entirely. 0x40 in binary is ,0100,0000
+				rxd.append(self.read(0x210C)) #0x210C is the address for RX_FIFO
+			if isr & 0x2:
+				print "TX error" #
+				self.write(0x2100, 0x2) #Control register address: 0x2=00000010 1 here resets the TX_FIFO
+				self.write(0x2100, 0x1) #control register address: 0x0=00000000 0 now TX_FIFO normal operations
+				self.write(isr, 0x2020)
 				return False
 		# I need to check somehow that things haven't gone horribly wrong.
 		return rxd
