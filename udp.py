@@ -202,10 +202,11 @@ class TOFProto(UDPFPGA):
 		if len(data) == 0:
 			self.write(0x2108, (dev << 1) | 0x300)
 		else:
-			self.write(0x2108, (dev << 1) | 0x100)
+                        self.write(0x2108, (dev << 1) | 0x100)
 			# set the last bit in the data
-			data[-1] = data[-1] | 0x200
-			self.write(0x2108, data)
+                	data[-1] = data[-1] |0x200
+#                	data.insert(0,dev << 1 | 0x100) #Delay between writes is 0.5 ms. To make one write command (dev+data) try this line. But, code breaks
+                	self.write(0x2108, data)
 		# now read until something is set in the ISR
 		val = None
 		while True:
@@ -219,6 +220,7 @@ class TOFProto(UDPFPGA):
 			# reset FIFO, I guess...?
 			self.write(0x2100, 0x2)
 			self.write(0x2100, 0x0)
+			self.write(0x2020, val)
 			return False
 		else:
 			return True
@@ -236,14 +238,16 @@ class TOFProto(UDPFPGA):
 		while len(rxd)<length:
 			val = self.read(0x2104)
 			isr = self.read(0x2020)
-                        print val
+                       # print val
+                       # print isr
 			if not (val & 0x40): #only is true when val & 0x40 is 0 entirely. 0x40 in binary is ,0100,0000
 				rxd.append(self.read(0x210C)) #0x210C is the address for RX_FIFO
 			if isr & 0x2:
 				print "TX error" #
 				self.write(0x2100, 0x2) #Control register address: 0x2=00000010 1 here resets the TX_FIFO
 				self.write(0x2100, 0x1) #control register address: 0x0=00000000 0 now TX_FIFO normal operations
-				self.write(isr, 0x2020)
+				self.write(0x2020, isr)
+#				self.write(isr, 0x2020)
 				return False
 		# I need to check somehow that things haven't gone horribly wrong.
 		return rxd
